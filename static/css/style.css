@@ -1514,6 +1514,10 @@ circle {
 }
 
 /* --- STYLING FOR POMODORO WIDGET ON DASHBOARD --- */
+#pomodoro {
+    width: 100%;
+}
+
 #pomodoro-info {
     display: flex;
     justify-content: space-evenly;
