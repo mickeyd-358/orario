@@ -1514,8 +1514,17 @@ circle {
 }
 
 /* --- STYLING FOR POMODORO WIDGET ON DASHBOARD --- */
-#pomodoro {
-    width: 100%;
+.widget.to-do {
+    flex: 1 1 500px;
+    min-width: 100%;
+    width: 100%;    
+    background-color: var(--widget-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 25px;
+    padding: 30px;
+    box-sizing: border-box;
+    box-shadow: rgba(100, 100, 111, 0.15) 0px 7px 29px 0px;
 }
 
 #pomodoro-info {
