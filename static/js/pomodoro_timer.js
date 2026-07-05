@@ -11,12 +11,42 @@ const COLORS = { work: '#e74c3c', short: '#f97316', long: '#6b8e23' };
 const CIRCUMFERENCE = 2 * Math.PI * 90;
 
 let currentMode = 'work';
-let interval = null;
+let countdownInterval = null;
+let saveInterval = null;
 let sessions = 0;
 
 let MODES = { work: work_length * 60, short: short_length * 60, long: long_length * 60 };
 let timeLeft = MODES.work;
 let totalTime = MODES.work;
+
+// Load persisted state from localStorage on page load
+window.addEventListener('DOMContentLoaded', () => {
+    const savedEndTime = localStorage.getItem('timerEndTime');
+    const savedMode = localStorage.getItem('timerMode');
+    const savedTimeLeft = localStorage.getItem('timerTimeLeft');
+    
+    if (savedEndTime && savedMode) {
+        currentMode = savedMode;
+        const now = Date.now();
+        const difference = Math.floor((Number(savedEndTime) - now) / 1000);
+        
+        if (difference > 0) {
+            timeLeft = difference;
+            totalTime = MODES[currentMode];
+            updateTabs();
+            startTimer();
+        } else {
+            localStorage.removeItem('timerEndTime');
+            localStorage.removeItem('timerMode');
+            localStorage.removeItem('timerTimeLeft');
+            switchMode('work');
+        }
+    } else if (savedTimeLeft) {
+        timeLeft = Number(savedTimeLeft);
+        updateDisplay();
+        updateTabs();
+    }
+});
 
 async function saveStudySession(minutesSpent) {
     const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
@@ -43,19 +73,19 @@ async function saveStudySession(minutesSpent) {
 workInput.addEventListener('input', function() {
     work_length = Number(this.value);
     MODES.work = work_length * 60;
-    if (currentMode === 'work' && !interval) resetTimer(); // Auto-update timer display if idle
+    if (currentMode === 'work' && !countdownInterval) resetTimer();
 });
 
 shortInput.addEventListener('input', function() {
     short_length = Number(this.value);
     MODES.short = short_length * 60;
-    if (currentMode === 'short' && !interval) resetTimer();
+    if (currentMode === 'short' && !countdownInterval) resetTimer();
 });
 
 longInput.addEventListener('input', function() {
     long_length = Number(this.value);
     MODES.long = long_length * 60;
-    if (currentMode === 'long' && !interval) resetTimer();
+    if (currentMode === 'long' && !countdownInterval) resetTimer();
 });
 
 const display = document.getElementById('timer-display');
@@ -68,7 +98,6 @@ function updateDisplay() {
     const s = String(timeLeft % 60).padStart(2, '0');
     display.textContent = `${m}:${s}`;
     
-    // Guard against dividing by zero if an input is cleared
     const percent = totalTime > 0 ? timeLeft / totalTime : 0;
     const offset = CIRCUMFERENCE * (1 - percent);
     progress.style.strokeDashoffset = offset;
@@ -90,17 +119,15 @@ function updateTabs() {
 }
 
 function switchMode(mode) {
-    clearInterval(interval); interval = null;
+    clearInterval(countdownInterval); countdownInterval = null;
+    clearInterval(saveInterval); saveInterval = null;
     currentMode = mode;
     timeLeft = MODES[mode];
     totalTime = MODES[mode];
     startBtn.classList.remove('hidden');
     pauseBtn.classList.add('hidden');
-    if (currentMode === 'work') {
-        toggleActivity(true);
-    } else {
-        toggleActivity(false);
-    }
+    
+    toggleActivity(currentMode === 'work');
     updateDisplay();
     updateTabs();
 }
@@ -108,7 +135,7 @@ function switchMode(mode) {
 async function toggleActivity(newStatus) {
     const csrf_token = document.querySelector('input[name="csrf_token"]')?.value;
     try {
-        const response = await fetch('/api/toggle_activity', {
+        await fetch('/api/toggle_activity', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -116,12 +143,9 @@ async function toggleActivity(newStatus) {
             },
             body: JSON.stringify({ is_studying: newStatus })
         });
-
-        const data = await response.json();
-
     } catch (error) {
         showError("Error updating status.");
-        console.log(error)
+        console.log("Error updating status", error);
     }
 }
 
@@ -133,45 +157,69 @@ function startTimer() {
         timeLeft = MODES[currentMode];
         totalTime = MODES[currentMode];
     }
+    
+    toggleActivity(currentMode === 'work');
+
+    const endTime = Date.now() + (timeLeft * 1000);
+    localStorage.setItem('timerEndTime', endTime);
+    localStorage.setItem('timerMode', currentMode);
+    localStorage.removeItem('timerTimeLeft');
+
     if (currentMode === 'work') {
-        toggleActivity(true);
-    } else {
-        toggleActivity(false);
+        // clear any old save intervals first so they don't stack up
+        clearInterval(saveInterval);
+        
+        // Set the interval to log 1 minute every 60 seconds
+        saveInterval = setInterval(() => {saveStudySession(1);}, 60000);
     }
 
-    interval = setInterval(() => {
-        timeLeft--;
+    // 1. Independent Countdown Loop
+    clearInterval(countdownInterval); countdownInterval = null;
+    countdownInterval = setInterval(() => {
+        const now = Date.now();
+        timeLeft = Math.max(0, Math.floor((endTime - now) / 1000));
         updateDisplay();
         if (timeLeft <= 0) {
-            clearInterval(interval); interval = null;
+            clearInterval(countdownInterval); countdownInterval = null;
+            clearInterval(saveInterval); saveInterval = null;
+            localStorage.removeItem('timerEndTime');
+            localStorage.removeItem('timerMode');
+            
             playChime();
             
             if (currentMode === 'work') {
                 sessions++;
+                saveStudySession(work_length);
                 document.getElementById('session-count').textContent = sessions;
-
-                saveStudySession(work_length); 
-                
                 switchMode(sessions % 4 === 0 ? 'long' : 'short');
-                toggleActivity(false);
             } else {
                 switchMode('work');
-                toggleActivity(true);
             }
-        startTimer();
+            startTimer();
         }
     }, 1000);
 }
 
 function pauseTimer() {
-    clearInterval(interval); interval = null;
+    clearInterval(countdownInterval); countdownInterval = null;
+    clearInterval(saveInterval); saveInterval = null;
+    
+    localStorage.removeItem('timerEndTime');
+    localStorage.setItem('timerTimeLeft', timeLeft);
+    
     pauseBtn.classList.add('hidden');
     startBtn.classList.remove('hidden');
     toggleActivity(false);
 }
 
 function resetTimer() {
-    clearInterval(interval); interval = null;
+    clearInterval(countdownInterval); countdownInterval = null;
+    clearInterval(saveInterval); saveInterval = null;
+    
+    localStorage.removeItem('timerEndTime');
+    localStorage.removeItem('timerMode');
+    localStorage.removeItem('timerTimeLeft');
+    
     timeLeft = MODES[currentMode];
     totalTime = MODES[currentMode];
     startBtn.classList.remove('hidden');
@@ -199,7 +247,6 @@ document.querySelector('#add-group-name')?.addEventListener('submit', async (e) 
 
     const currentForm = e.currentTarget;
     const groupName = currentForm.querySelector('input[name="group_name"]').value.trim();
-
     const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
 
     if (groupName.length > 50 || groupName.length === 0) {

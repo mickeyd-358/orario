@@ -15,7 +15,7 @@
     --accent-color1: #00ffb7;
     --accent-color2: #00ffb7;
     --border-color: #eee;
-    
+    --ring-color: rgb(167, 164, 164);
     --nav-bg: #1b1f48;
     --nav-text: #f4f7f6;
     --nav-hover-bg: #00ffb7;
@@ -32,7 +32,7 @@
     --accent-color1: #00ffb7;
     --accent-color2: #1b1f48;
     --border-color: #2a2f5b;
-    
+    --ring-color: black;
     --nav-bg: #070914;
     --nav-text: #f4f7f6;
     --nav-hover-bg: #00ffb7;
@@ -1463,6 +1463,10 @@ button.edit-card-button::after {
     border: 1px solid var(--border-color);
 }
 
+circle {
+    stroke: var(--ring-color);
+}
+
 .pomodoro-details-panel summary {
     background: var(--widget-bg);
     padding: 20px;
@@ -1507,4 +1511,125 @@ button.edit-card-button::after {
     background: var(--nav-bg);
     color: var(--accent-color1);
     transform: translateY(-2px);
+}
+
+/* --- STYLING FOR POMODORO WIDGET ON DASHBOARD --- */
+#pomodoro-info {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+#time-left {
+    color: blueviolet;
+}
+
+#top-3-leaderboard {
+    color: black;
+}
+
+#streak-length {
+    color: yellowgreen;
+}
+
+/* ---STREAK FIRE STYLING --- */
+.fire-container {
+      position: relative;
+      width: 100px;
+      height: 120px;
+      animation: float 3s ease-in-out infinite;
+      
+      /* Intense, layered neon ambient glow behind the entire asset */
+      filter: 
+        drop-shadow(0 4px 12px rgba(255, 69, 0, 0.35))
+        drop-shadow(0 12px 30px rgba(255, 110, 0, 0.2));
+    }
+
+    /* Elegant teardrop geometry */
+    .flame {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      border-radius: 0% 100% 60% 60% / 0% 60% 60% 100%;
+      transform-origin: 30% 70%;
+    }
+
+    .flame.outer {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #ff4500, #ff6b00);
+      transform: translateX(-50%) rotate(45deg);
+      animation: flame-smooth 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+      /* Intense glow specifically for the outer red rim */
+      filter: drop-shadow(0 0 6px rgba(255, 69, 0, 0.6));
+    }
+
+    .flame.inner {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #ff9000, #ffa500);
+      transform: translateX(-50%) rotate(45deg);
+      animation: flame-smooth 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate-reverse;
+      /* Adds a fiery mid-layer radiance */
+      filter: drop-shadow(0 0 4px rgba(255, 144, 0, 0.5));
+    }
+
+    .flame.core {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #ffeb3b, #fff176);
+      transform: translateX(-50%) rotate(45deg);
+      animation: flame-smooth 1s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+      /* Inner white-hot brightness core glow */
+      filter: drop-shadow(0 0 4px rgba(255, 235, 59, 0.8));
+    }
+
+    /* Fluid, organic swaying motion */
+    @keyframes flame-smooth {
+      0% { 
+        transform: translateX(-50%) rotate(43deg) scale(0.96, 1.04); 
+      }
+      100% { 
+        transform: translateX(-50%) rotate(47deg) scale(1.04, 0.96); 
+      }
+    }
+
+    /* Premium UI floating effect */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+.streak-widget {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #1e1e24;
+    padding: 20px 40px;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border: 3px solid #2a2a35;
+}
+
+/* dead streak styling */
+.flame.outer.dead {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #424240, #171717);
+    transform: translateX(-50%) rotate(45deg);
+    animation: flame-smooth 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+
+.flame.inner.dead {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, #7a7977, #636260);
+    transform: translateX(-50%) rotate(45deg);
+    animation: flame-smooth 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate-reverse;
+}
+
+.flame.core.dead {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #acaba8, #e5e4db);
+    transform: translateX(-50%) rotate(45deg);
+    animation: flame-smooth 1s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
 }

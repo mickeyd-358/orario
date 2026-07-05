@@ -156,6 +156,25 @@
                 </tbody>
             </table>    
         </section>
+
+        <section class="widget pomodoro">
+            <h1>Study stats</h1>
+            <div id="pomodoro-info">
+                <div id="time-left">
+                    <h1>Timer:</h1>
+                </div>
+
+                <div id="top-3-leaderboard">
+                    <h1>Top 3 today</h1>
+                </div>
+
+                <div id="streak-length">
+                    <div id="streak-counter"></div>
+
+                </div>
+            </div>
+        </section>
+
     </main>
 </div>
 
@@ -248,4 +267,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <script src = "../static/js/change_quote.js"></script>
 <script src="../static/js/to-do-popups.js"></script>
+<script src="../static/js/pomodoro_timer.js"></script>
+<script src="../static/js/show_study_streak.js"></script>
 {% endblock %}

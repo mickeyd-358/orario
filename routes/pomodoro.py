@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_required
@@ -137,3 +137,39 @@ def toggle_activity():
     db.session.commit()
     
     return jsonify({'success': True}), 200
+
+@pomodoro_bp.route('/api/calculate_streak', methods=['GET'])
+@login_required
+def calculate_streak():
+
+    id = current_user.id
+
+    raw_data = db.session.query(DailyStudyLog.date).filter(DailyStudyLog.user_id == id).all()
+
+    dates_list = [row.date for row in raw_data]
+    dates_list.sort(reverse=True)
+
+    today = date.today()
+
+    # Logic for if a user has not studied at all yet
+    if not dates_list:
+        return jsonify({"success": True, "streak": 0})
+
+    # If the user hasn't studied today or yesterday, their streak is 0
+    if dates_list[0] != today and dates_list[0] != today - timedelta(days=1):
+        return jsonify({"success": True, "streak": 0})
+
+    streak = 1
+
+    for i in range(len(dates_list) - 1):
+        # Check if the older date is exactly 1 day before the newer date
+        if (dates_list[i] - dates_list[i + 1]).days == 1:
+            streak += 1
+        elif (dates_list[i] - dates_list[i + 1]).days == 0:
+            continue
+        else:
+            # The moment there is a gap greater than 1 day, the current streak ends
+            break
+
+
+    return jsonify({"success": True, "streak": streak})
